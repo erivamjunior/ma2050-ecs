@@ -1,0 +1,163 @@
+﻿.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 30, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 120;
+  padding: 16px;
+}
+
+.modalCard {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #c7d6e5;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 14px 36px rgba(15, 27, 41, 0.25);
+  display: grid;
+  gap: 12px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: #16324d;
+}
+
+.closeButton {
+  border: 1px solid #b4c6d8;
+  background: #f5f9fd;
+  color: #26445f;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: #2c4862;
+  font-weight: 500;
+}
+
+.form input,
+.form select,
+.primaryButton,
+.secondaryButton,
+.ghostButton {
+  border: 1px solid #b5c7d9;
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-size: 14px;
+  background: #fff;
+  color: #1d334b;
+}
+
+.form input:focus,
+.form select:focus {
+  outline: 2px solid rgba(28, 138, 152, 0.23);
+  border-color: #1c8a98;
+}
+
+.actionRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  background: #dceff2;
+  color: #16384c;
+  border-color: #8fb6bd;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background: #f2f7fb;
+  color: #26445f;
+  border-color: #b7c8da;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ghostButton {
+  background: #ffffff;
+  color: #365773;
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.ghostButton:disabled,
+.closeButton:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #bf3e49;
+  font-weight: 600;
+}
+
+.hint {
+  color: #546b81;
+  font-size: 13px;
+}
+
+.pickerWrap {
+  display: grid;
+  gap: 8px;
+}
+
+.dropdown {
+  border: 1px solid #cad8e6;
+  border-radius: 10px;
+  background: #ffffff;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.dropdownItem {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: #fff;
+  padding: 9px 10px;
+  color: #1f3d59;
+  cursor: pointer;
+}
+
+.dropdownItem:hover {
+  background: #eef5fb;
+}
+
+.selectedInfo {
+  color: #33516d;
+  font-size: 13px;
+}
+
+.inlineBox {
+  border: 1px solid #d0deeb;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fbfdff;
+  display: grid;
+  gap: 8px;
+}
