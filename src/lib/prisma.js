@@ -1,3 +1,4 @@
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis;
@@ -9,8 +10,9 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL nao configurada.");
   }
 
+  const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({
-    datasourceUrl: connectionString,
+    adapter,
   });
 }
 
