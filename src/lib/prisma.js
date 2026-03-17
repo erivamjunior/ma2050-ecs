@@ -10,11 +10,7 @@ function createPrismaClient() {
   }
 
   return new PrismaClient({
-    datasources: {
-      db: {
-        url: connectionString,
-      },
-    },
+    datasourceUrl: connectionString,
   });
 }
 
