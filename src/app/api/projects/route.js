@@ -635,7 +635,8 @@ export async function GET() {
   try {
     const projects = await listProjectsEnriched();
     return NextResponse.json({ projects });
-  } catch {
+  } catch (error) {
+    console.error("GET /api/projects failed", error);
     return NextResponse.json({ error: "Falha ao listar projetos." }, { status: 500 });
   }
 }
