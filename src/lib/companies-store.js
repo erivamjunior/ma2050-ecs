@@ -40,22 +40,22 @@ function toIso(value) {
 
 async function buildCompanyLinkageMap() {
   const [biddings, contracts] = await Promise.all([
-    prisma.projectBidding.findMany({ select: { winnerCnpj: true } }),
-    prisma.projectContract.findMany({ select: { contractorCnpj: true } }),
+    prisma.projectBidding.findMany({ select: { companyId: true, winnerCnpj: true } }),
+    prisma.projectContract.findMany({ select: { companyId: true, contractorCnpj: true } }),
   ]);
 
   const linkedCounts = new Map();
 
   for (const bidding of biddings) {
-    const cnpj = normalizeCnpj(bidding.winnerCnpj);
-    if (!cnpj) continue;
-    linkedCounts.set(cnpj, (linkedCounts.get(cnpj) || 0) + 1);
+    const key = normalizeText(bidding.companyId) || normalizeCnpj(bidding.winnerCnpj);
+    if (!key) continue;
+    linkedCounts.set(key, (linkedCounts.get(key) || 0) + 1);
   }
 
   for (const contract of contracts) {
-    const cnpj = normalizeCnpj(contract.contractorCnpj);
-    if (!cnpj) continue;
-    linkedCounts.set(cnpj, (linkedCounts.get(cnpj) || 0) + 1);
+    const key = normalizeText(contract.companyId) || normalizeCnpj(contract.contractorCnpj);
+    if (!key) continue;
+    linkedCounts.set(key, (linkedCounts.get(key) || 0) + 1);
   }
 
   return linkedCounts;
@@ -138,7 +138,7 @@ export async function listCompanies() {
     buildCompanyLinkageMap(),
   ]);
 
-  return companies.map((company) => mapCompany(company, linkedCounts.get(company.cnpj) || 0));
+  return companies.map((company) => mapCompany(company, linkedCounts.get(company.id) || linkedCounts.get(company.cnpj) || 0));
 }
 
 export async function getCompanyByCnpj(cnpj) {
@@ -156,7 +156,24 @@ export async function getCompanyByCnpj(cnpj) {
   }
 
   const linkedCounts = await buildCompanyLinkageMap();
-  return mapCompany(company, linkedCounts.get(company.cnpj) || 0);
+  return mapCompany(company, linkedCounts.get(company.id) || linkedCounts.get(company.cnpj) || 0);
+}
+export async function getCompanyById(id) {
+  const companyId = normalizeText(id);
+  if (!companyId) {
+    return null;
+  }
+
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+  });
+
+  if (!company) {
+    return null;
+  }
+
+  const linkedCounts = await buildCompanyLinkageMap();
+  return mapCompany(company, linkedCounts.get(company.id) || linkedCounts.get(company.cnpj) || 0);
 }
 export async function createCompany(input) {
   const data = validateCompanyData(normalizeCompanyInput(input));
@@ -218,7 +235,7 @@ export async function updateCompany(id, input) {
   });
 
   const linkedCounts = await buildCompanyLinkageMap();
-  return mapCompany(company, linkedCounts.get(company.cnpj) || 0);
+  return mapCompany(company, linkedCounts.get(company.id) || linkedCounts.get(company.cnpj) || 0);
 }
 
 export async function deleteCompany(id) {
@@ -237,7 +254,7 @@ export async function deleteCompany(id) {
   }
 
   const linkedCounts = await buildCompanyLinkageMap();
-  if ((linkedCounts.get(existing.cnpj) || 0) > 0) {
+  if ((linkedCounts.get(existing.id) || linkedCounts.get(existing.cnpj) || 0) > 0) {
     throw new Error("Empresa vinculada a licitacao ou contrato nao pode ser excluida.");
   }
 
