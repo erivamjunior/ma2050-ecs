@@ -14,6 +14,7 @@ export default function AppShell({ children }) {
   const searchParams = useSearchParams();
   const isProjectsRoute = pathname === "/projetos";
   const isInterestedPartiesRoute = pathname.startsWith("/partes-interessadas");
+  const isSystemManagementRoute = pathname.startsWith("/gestao-sistema");
   const projectPhase = searchParams.get("fase") === "contratado" ? "contratado" : "banco";
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -139,6 +140,10 @@ export default function AppShell({ children }) {
 
           <Link href="/fontes-recursos" className={pathname === "/fontes-recursos" ? "navLink navLinkActive" : "navLink"}>
             Fontes de Recursos
+          </Link>
+
+          <Link href="/gestao-sistema" className={isSystemManagementRoute ? "navLink navLinkActive" : "navLink"}>
+            Gestao do Sistema
           </Link>
         </nav>
       </aside>

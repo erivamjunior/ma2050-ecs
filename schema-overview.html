@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schema Overview</title>
+  <style>
+    body{margin:0;font-family:Segoe UI,Tahoma,sans-serif;background:#f6f1e8;color:#1f2d36}
+    main{max-width:1100px;margin:0 auto;padding:32px 20px 48px}
+    .hero,.card{background:#fffdf8;border:1px solid #ddcfbb;border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.06)}
+    .hero{padding:24px;margin-bottom:20px;background:linear-gradient(135deg,#224c59,#3a786f);color:#f7fbfb}
+    .hero h1{margin:0 0 10px}.hero p{margin:0;line-height:1.5}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:20px 0}
+    .card{padding:18px}
+    h2{margin:0 0 12px;font-size:1.05rem}
+    ul{margin:0;padding-left:18px;line-height:1.7}
+    pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#18252c;color:#eaf3f5;padding:20px;border-radius:16px;overflow:auto}
+    code{font-family:Consolas,monospace}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>Schema HTML - sistema_gestao_publica</h1>
+      <p>Resumo visual gerado a partir de <code>prisma/schema.prisma</code>. O arquivo abaixo pode ser aberto direto no navegador.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Modelos</h2>
+        <ul>
+          <li>Secretaria</li>
+          <li>Setor</li>
+          <li>Stakeholder</li>
+          <li>FundingSource</li>
+          <li>Company</li>
+          <li>Project</li>
+          <li>ProjectFundingSource</li>
+          <li>ProjectBidding</li>
+          <li>Measurement</li>
+          <li>Payment</li>
+          <li>ProjectContract</li>
+          <li>ContractAddendum</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Enums</h2>
+        <ul>
+          <li>ProjectStatus</li>
+          <li>ProjectPhase</li>
+          <li>TermMode</li>
+          <li>TermUnit</li>
+          <li>TermReference</li>
+          <li>AddendumType</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Relacoes Principais</h2>
+        <ul>
+          <li>Secretaria 1:N Setor</li>
+          <li>Secretaria 1:N Stakeholder</li>
+          <li>Stakeholder 1:N Project</li>
+          <li>Project N:N FundingSource via ProjectFundingSource</li>
+          <li>Project 1:1 ProjectBidding</li>
+          <li>Project 1:N Measurement</li>
+          <li>Measurement 1:N Payment</li>
+          <li>Project 1:1 ProjectContract</li>
+          <li>ProjectContract 1:N ContractAddendum</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Schema Completo</h2>
+      <pre><code>generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  planejado
+  em_execucao
+  concluido
+  suspenso
+}
+
+enum ProjectPhase {
+  banco
+  contratado
+}
+
+enum TermMode {
+  relative
+  fixed
+}
+
+enum TermUnit {
+  dias
+  meses
+}
+
+enum TermReference {
+  assinatura_os
+  recebimento_os
+}
+
+enum AddendumType {
+  prazo
+  valor
+  valor_prazo
+}
+
+model Secretaria {
+  id           String            @id @default(uuid()) @db.Uuid
+  name         String            @unique
+  sigla        String            @unique
+  createdAt    DateTime          @default(now())
+  setores      Setor[]
+  stakeholders Stakeholder[]
+  contracts    ProjectContract[]
+}
+
+model Setor {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  sigla        String
+  secretariaId String        @db.Uuid
+  createdAt    DateTime      @default(now())
+  secretaria   Secretaria    @relation(fields: [secretariaId], references: [id], onDelete: Restrict)
+  stakeholders Stakeholder[]
+
+  @@unique([secretariaId, name])
+  @@unique([secretariaId, sigla])
+}
+
+model Stakeholder {
+  id           String      @id @default(uuid()) @db.Uuid
+  name         String
+  cpf          String      @unique
+  birthDate    DateTime
+  email        String
+  phone        String
+  secretariaId String      @db.Uuid
+  setorId      String      @db.Uuid
+  createdAt    DateTime    @default(now())
+  secretaria   Secretaria  @relation(fields: [secretariaId], references: [id], onDelete: Restrict)
+  setor        Setor       @relation(fields: [setorId], references: [id], onDelete: Restrict)
+  projects     Project[]
+}
+
+model FundingSource {
+  id            String                 @id @default(uuid()) @db.Uuid
+  name          String                 @unique
+  amountCents   BigInt
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime?
+  projectLinks  ProjectFundingSource[]
+  payments      Payment[]
+}
+
+model Company {
+  id                              String   @id @default(uuid()) @db.Uuid
+  corporateName                   String
+  tradeName                       String
+  cnpj                            String   @unique
+  email                           String
+  phone                           String
+  address                         String
+  stateCode                       String
+  mainCnaeCode                    String
+  mainEconomicActivityDescription String
+  companySize                     String
+  openedAt                        DateTime
+  establishmentType               String
+  legalNatureCode                 String
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime?
+}
+
+model Project {
+  id             String                 @id @default(uuid()) @db.Uuid
+  code           String                 @unique
+  name           String
+  stakeholderId  String?                @db.Uuid
+  amountCents    BigInt
+  phase          ProjectPhase           @default(banco)
+  status         ProjectStatus
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime?
+  stakeholder    Stakeholder?           @relation(fields: [stakeholderId], references: [id], onDelete: SetNull)
+  fundingSources ProjectFundingSource[]
+  bidding        ProjectBidding?
+  measurements   Measurement[]
+  contract       ProjectContract?
+}
+
+model ProjectFundingSource {
+  id              String        @id @default(uuid()) @db.Uuid
+  projectId       String        @db.Uuid
+  fundingSourceId String        @db.Uuid
+  amountCents     BigInt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime?
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fundingSource   FundingSource @relation(fields: [fundingSourceId], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, fundingSourceId])
+}
+
+model ProjectBidding {
+  id                          String   @id @default(uuid()) @db.Uuid
+  projectId                   String   @unique @db.Uuid
+  biddingNumber               String
+  administrativeProcessNumber String
+  modality                    String
+  objectDescription           String?
+  bidValueCents               BigInt?
+  winnerName                  String
+  winnerCnpj                  String
+  publishedAt                 DateTime?
+  homologatedAt               DateTime?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime?
+  project                     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Measurement {
+  id            String      @id @default(uuid()) @db.Uuid
+  projectId     String      @db.Uuid
+  number        Int
+  processNumber String
+  startDate     DateTime?
+  endDate       DateTime?
+  amountCents   BigInt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime?
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+
+  @@unique([projectId, number])
+}
+
+model Payment {
+  id              String        @id @default(uuid()) @db.Uuid
+  measurementId   String        @db.Uuid
+  fundingSourceId String        @db.Uuid
+  invoiceNumber   String
+  issueDate       DateTime
+  amountCents     BigInt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime?
+  measurement     Measurement   @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  fundingSource   FundingSource @relation(fields: [fundingSourceId], references: [id], onDelete: Restrict)
+}
+
+model ProjectContract {
+  id                          String             @id @default(uuid()) @db.Uuid
+  projectId                   String             @unique @db.Uuid
+  secretariaId                String             @db.Uuid
+  contractNumber              String
+  contractorName              String
+  contractorCnpj              String
+  contractValueCents          BigInt
+  contractSignedAt            DateTime
+  administrativeProcessNumber String
+  serviceOrderNumber          String
+  serviceOrderValueCents      BigInt
+  serviceOrderSignedAt        DateTime
+  executionTermMode           TermMode
+  executionTermQuantity       Int?
+  executionTermUnit           TermUnit?
+  executionTermReference      TermReference?
+  executionTermEndDate        DateTime?
+  validityTermMode            TermMode
+  validityTermQuantity        Int?
+  validityTermUnit            TermUnit?
+  validityTermReference       TermReference?
+  validityTermEndDate         DateTime?
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime?
+  project                     Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secretaria                  Secretaria         @relation(fields: [secretariaId], references: [id], onDelete: Restrict)
+  addenda                     ContractAddendum[]
+}
+
+model ContractAddendum {
+  id                          String          @id @default(uuid()) @db.Uuid
+  contractId                  String          @db.Uuid
+  number                      String
+  administrativeProcessNumber String
+  signedAt                    DateTime
+  type                        AddendumType
+  valueCents                  BigInt?
+  executionTermMode           TermMode?
+  executionTermQuantity       Int?
+  executionTermUnit           TermUnit?
+  executionTermReference      TermReference?
+  executionTermEndDate        DateTime?
+  validityTermMode            TermMode?
+  validityTermQuantity        Int?
+  validityTermUnit            TermUnit?
+  validityTermReference       TermReference?
+  validityTermEndDate         DateTime?
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime?
+  contract                    ProjectContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, number])
+}</code></pre>
+    </section>
+  </main>
+</body>
+</html>

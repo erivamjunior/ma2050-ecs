@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schema Diagram</title>
+  <style>
+    :root{
+      --bg:#eef1f4;
+      --panel:#ffffff;
+      --header:#f5f7fa;
+      --border:#cfd7df;
+      --grid:#e8edf2;
+      --text:#24313b;
+      --muted:#6d7d89;
+      --line:#556b7e;
+      --pk:#b58a00;
+      --fk:#7c8795;
+      --type:#2f8f9d;
+      --shadow:0 10px 26px rgba(30,45,60,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Segoe UI,Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+    .page{max-width:1800px;margin:0 auto;padding:18px}
+    .hero{background:linear-gradient(135deg,#2a5562,#5a857f);color:#f8fcfc;border-radius:18px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+    .hero h1{margin:0 0 6px;font-size:1.9rem}
+    .hero p{margin:0;font-size:.98rem;opacity:.92}
+    .toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .tool{background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow)}
+    .tool label{font-size:.92rem;font-weight:600}
+    .tool button{border:1px solid var(--border);background:#f7f9fb;border-radius:10px;padding:7px 10px;cursor:pointer}
+    .tool span{font-size:.9rem;color:var(--muted)}
+    .board{height:1450px;border:1px solid var(--border);border-radius:22px;overflow:auto;background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      #fbfcfd;
+      background-size:32px 32px,32px 32px,auto;
+      box-shadow:var(--shadow)}
+    .viewport{width:max-content;height:max-content;transform-origin:top left}
+    .canvas{position:relative;width:2050px;height:1450px}
+    svg{position:absolute;inset:0;width:2050px;height:1450px;pointer-events:none}
+    .table{position:absolute;width:290px;background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:grab;user-select:none}
+    .table.dragging{cursor:grabbing;box-shadow:0 18px 40px rgba(30,45,60,.16);z-index:30}
+    .table-top{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#eef2f6;border-bottom:1px solid var(--border);font-size:.82rem;color:var(--muted)}
+    .eye{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#ffffff;border:1px solid var(--border);font-size:11px}
+    .schema{padding:6px 10px 2px;font-size:.8rem;color:#6b7781}
+    .title{padding:0 10px 8px;font-weight:700;border-bottom:1px solid #e8edf2}
+    .field{display:grid;grid-template-columns:auto 1fr auto;gap:6px;padding:4px 10px;font-size:.8rem;line-height:1.35;border-bottom:1px solid #f1f4f7}
+    .field:last-child{border-bottom:0}
+    .icon{width:12px;text-align:center;font-size:11px}
+    .icon.pk{color:var(--pk)}
+    .icon.fk{color:var(--fk)}
+    .name{word-break:break-word}
+    .type{color:var(--type);text-align:right;font-size:.76rem}
+    .line{stroke:var(--line);stroke-width:2.2;fill:none;opacity:.85}
+    .line.soft{stroke-dasharray:7 6}
+    .label{font-size:11px;fill:#566775;font-weight:700}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Mapa Visual do Schema</h1>
+      <p>Versao detalhada em estilo ERD, com colunas e tipos de dados por tabela, mais proxima do visual classico de banco.</p>
+    </section>
+
+    <section class="toolbar">
+      <div class="tool">
+        <label for="zoom">Zoom</label>
+        <input id="zoom" type="range" min="45" max="170" value="100">
+        <span id="zoomValue">100%</span>
+      </div>
+      <div class="tool">
+        <button id="resetZoom" type="button">Resetar zoom</button>
+        <span>Arraste as tabelas para reorganizar.</span>
+      </div>
+    </section>
+
+    <section class="board">
+      <div class="viewport" id="viewport">
+        <div class="canvas">
+          <svg viewBox="0 0 2050 1450" aria-hidden="true">
+            <g id="relations"></g>
+          </svg>
+
+          <article class="table" id="secretaria" style="left:40px;top:50px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Secretaria</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">name</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">sigla</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+          </article>
+
+          <article class="table" id="setor" style="left:390px;top:40px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Setor</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">name</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">sigla</span><span class="type">text</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">secretariaId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+          </article>
+
+          <article class="table" id="stakeholder" style="left:390px;top:260px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Stakeholder</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">name</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">cpf</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">birthDate</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">email</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">phone</span><span class="type">text</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">secretariaId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">setorId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+          </article>
+
+          <article class="table" id="project" style="left:830px;top:250px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Project</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">code</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">name</span><span class="type">text</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">stakeholderId</span><span class="type">uuid?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">amountCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">phase</span><span class="type">enum</span></div>
+            <div class="field"><span class="icon"></span><span class="name">status</span><span class="type">enum</span></div>
+            <div class="field"><span class="icon"></span><span class="name">startDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">endDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="projectBidding" style="left:1290px;top:40px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">ProjectBidding</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">projectId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">biddingNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">administrativeProcessNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">modality</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">objectDescription</span><span class="type">text?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">bidValueCents</span><span class="type">bigint?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">winnerName</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">winnerCnpj</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">publishedAt</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">homologatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="projectFundingSource" style="left:1290px;top:410px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">ProjectFundingSource</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">projectId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">fundingSourceId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">amountCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">@@unique(projectId, fundingSourceId)</span><span class="type">index</span></div>
+          </article>
+
+          <article class="table" id="measurement" style="left:1290px;top:700px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Measurement</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">projectId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">number</span><span class="type">integer</span></div>
+            <div class="field"><span class="icon"></span><span class="name">processNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">startDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">endDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">amountCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="payment" style="left:1670px;top:760px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Payment</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">measurementId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">fundingSourceId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">invoiceNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">issueDate</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">amountCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="projectContract" style="left:40px;top:720px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">ProjectContract</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">projectId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">secretariaId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">contractNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">contractorName</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">contractorCnpj</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">contractValueCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">contractSignedAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">administrativeProcessNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">serviceOrderNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">serviceOrderValueCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">serviceOrderSignedAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermMode</span><span class="type">enum</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermQuantity</span><span class="type">integer?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermUnit</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermReference</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermEndDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermMode</span><span class="type">enum</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermQuantity</span><span class="type">integer?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermUnit</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermReference</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermEndDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="contractAddendum" style="left:420px;top:1010px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">ContractAddendum</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon fk">🗝</span><span class="name">contractId</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">number</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">administrativeProcessNumber</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">signedAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">type</span><span class="type">enum</span></div>
+            <div class="field"><span class="icon"></span><span class="name">valueCents</span><span class="type">bigint?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermMode</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermQuantity</span><span class="type">integer?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermUnit</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermReference</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">executionTermEndDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermMode</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermQuantity</span><span class="type">integer?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermUnit</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermReference</span><span class="type">enum?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">validityTermEndDate</span><span class="type">timestamp?</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="fundingSource" style="left:1660px;top:1070px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">FundingSource</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">name</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">amountCents</span><span class="type">bigint</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+
+          <article class="table" id="company" style="left:40px;top:1120px">
+            <div class="table-top"><span class="eye">◉</span><span>public</span></div>
+            <div class="schema">schema</div>
+            <div class="title">Company</div>
+            <div class="field"><span class="icon pk">🔑</span><span class="name">id</span><span class="type">uuid</span></div>
+            <div class="field"><span class="icon"></span><span class="name">corporateName</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">tradeName</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">cnpj</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">email</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">phone</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">address</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">stateCode</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">mainCnaeCode</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">mainEconomicActivityDescription</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">companySize</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">openedAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">establishmentType</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">legalNatureCode</span><span class="type">text</span></div>
+            <div class="field"><span class="icon"></span><span class="name">createdAt</span><span class="type">timestamp</span></div>
+            <div class="field"><span class="icon"></span><span class="name">updatedAt</span><span class="type">timestamp?</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const zoomInput = document.getElementById("zoom");
+    const zoomValue = document.getElementById("zoomValue");
+    const resetZoom = document.getElementById("resetZoom");
+    const viewport = document.getElementById("viewport");
+    const canvas = document.querySelector(".canvas");
+    const relationsLayer = document.getElementById("relations");
+
+    const relations = [
+      { from: "secretaria", to: "setor", label: "1:N", cls: "line" },
+      { from: "secretaria", to: "stakeholder", label: "1:N", cls: "line" },
+      { from: "secretaria", to: "projectContract", label: "1:N", cls: "line" },
+      { from: "stakeholder", to: "project", label: "1:N", cls: "line" },
+      { from: "project", to: "projectBidding", label: "1:1", cls: "line" },
+      { from: "project", to: "projectFundingSource", label: "1:N", cls: "line soft" },
+      { from: "project", to: "measurement", label: "1:N", cls: "line" },
+      { from: "project", to: "projectContract", label: "1:1", cls: "line" },
+      { from: "projectFundingSource", to: "fundingSource", label: "N:1", cls: "line soft" },
+      { from: "measurement", to: "payment", label: "1:N", cls: "line" },
+      { from: "projectContract", to: "contractAddendum", label: "1:N", cls: "line" }
+    ];
+
+    function applyZoom(value) {
+      viewport.style.transform = `scale(${value / 100})`;
+      zoomValue.textContent = `${value}%`;
+    }
+
+    function createRelationElements() {
+      relations.forEach((relation, index) => {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", relation.cls);
+        path.dataset.index = index;
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("class", "label");
+        text.dataset.index = index;
+        text.textContent = relation.label;
+
+        relationsLayer.appendChild(path);
+        relationsLayer.appendChild(text);
+      });
+    }
+
+    function getAnchor(el, side) {
+      const left = parseFloat(el.style.left || 0);
+      const top = parseFloat(el.style.top || 0);
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+      return side === "left"
+        ? { x: left, y: top + height / 2 }
+        : { x: left + width, y: top + height / 2 };
+    }
+
+    function pickSides(fromEl, toEl) {
+      const fromLeft = parseFloat(fromEl.style.left || 0);
+      const toLeft = parseFloat(toEl.style.left || 0);
+      return toLeft >= fromLeft ? ["right", "left"] : ["left", "right"];
+    }
+
+    function relationPath(start, end) {
+      const dx = Math.max(44, Math.abs(end.x - start.x) * 0.35);
+      return `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
+    }
+
+    function updateRelations() {
+      relations.forEach((relation, index) => {
+        const fromEl = document.getElementById(relation.from);
+        const toEl = document.getElementById(relation.to);
+        if (!fromEl || !toEl) return;
+        const [fromSide, toSide] = pickSides(fromEl, toEl);
+        const start = getAnchor(fromEl, fromSide);
+        const end = getAnchor(toEl, toSide);
+        const path = relationsLayer.querySelector(`path[data-index="${index}"]`);
+        const text = relationsLayer.querySelector(`text[data-index="${index}"]`);
+        path.setAttribute("d", relationPath(start, end));
+        text.setAttribute("x", String((start.x + end.x) / 2));
+        text.setAttribute("y", String((start.y + end.y) / 2 - 8));
+      });
+    }
+
+    zoomInput.addEventListener("input", (event) => applyZoom(Number(event.target.value)));
+    resetZoom.addEventListener("click", () => {
+      zoomInput.value = 100;
+      applyZoom(100);
+    });
+
+    createRelationElements();
+    applyZoom(100);
+    updateRelations();
+
+    let active = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    document.querySelectorAll(".table").forEach((table) => {
+      table.addEventListener("mousedown", (event) => {
+        active = table;
+        const rect = table.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        table.classList.add("dragging");
+      });
+    });
+
+    window.addEventListener("mousemove", (event) => {
+      if (!active) return;
+      const boardRect = canvas.getBoundingClientRect();
+      const scale = Number(zoomInput.value) / 100;
+      const left = (event.clientX - boardRect.left - offsetX) / scale;
+      const top = (event.clientY - boardRect.top - offsetY) / scale;
+      active.style.left = `${Math.max(0, left)}px`;
+      active.style.top = `${Math.max(0, top)}px`;
+      updateRelations();
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (!active) return;
+      active.classList.remove("dragging");
+      active = null;
+    });
+  </script>
+</body>
+</html>

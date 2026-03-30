@@ -1,0 +1,123 @@
+.page {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 56px;
+}
+
+.header {
+  border: 1px solid rgba(120, 132, 144, 0.18);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(33, 80, 93, 0.96), rgba(81, 132, 124, 0.92));
+  color: #f7fbfb;
+  padding: 22px 24px;
+  box-shadow: 0 16px 34px rgba(64, 78, 86, 0.12);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.subtitle {
+  margin: 10px 0 0;
+  max-width: 980px;
+  line-height: 1.5;
+  color: rgba(247, 251, 251, 0.92);
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.metricCard,
+.panel {
+  border: 1px solid rgba(120, 132, 144, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 253, 249, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px rgba(95, 85, 74, 0.08);
+}
+
+.metricCard {
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.metricLabel {
+  color: #6f7b86;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.metricValue {
+  color: #304352;
+  font-size: 1rem;
+}
+
+.metricText {
+  margin: 0;
+  color: #536572;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.panel {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  color: #304352;
+  font-size: 1.15rem;
+}
+
+.panelHeader p {
+  margin: 8px 0 0;
+  color: #536572;
+  line-height: 1.45;
+  font-size: 13px;
+}
+
+.diagramFrameWrap {
+  border: 1px solid rgba(120, 132, 144, 0.16);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.diagramFrame {
+  display: block;
+  width: 100%;
+  min-height: 1300px;
+  border: none;
+  background: #fbfcfd;
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 18px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .diagramFrame {
+    min-height: 1100px;
+  }
+}
