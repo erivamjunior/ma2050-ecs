@@ -161,6 +161,7 @@ function buildTermPayload(termForm) {
 function buildContractPayload(contractForm, bidding) {
   return {
     contractNumber: contractForm.contractNumber.trim(),
+    companyId: bidding?.companyId?.trim() || "",
     contractorName: bidding?.winnerName?.trim() || "",
     contractorCnpj: bidding?.winnerCnpj?.trim() || "",
     contractValueCents: currencyInputToCents(contractForm.contractValueCents),

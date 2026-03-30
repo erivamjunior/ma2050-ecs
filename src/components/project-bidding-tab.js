@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import CompanyModal, { INITIAL_COMPANY_FORM, buildCompanyForm, formatCnpj } from "@/components/company-modal";
+import SearchableCreateSelect from "@/components/searchable-create-select";
 import SecretariaModal from "@/components/secretaria-modal";
 import SubunidadeModal from "@/components/subunidade-modal";
 import styles from "@/app/modules.module.css";
@@ -19,13 +20,11 @@ const MODALITY_OPTIONS = [
   "Outro",
 ];
 
-const ADD_SECRETARIA_OPTION = "__add_secretaria__";
-const ADD_SUBUNIDADE_OPTION = "__add_subunidade__";
-
 const EMPTY_BIDDING = {
   biddingNumber: "",
   secretariaId: "",
   setorId: "",
+  companyId: "",
   administrativeProcessNumber: "",
   modality: "",
   objectDescription: "",
@@ -67,6 +66,7 @@ function normalizeBiddingForForm(bidding) {
     biddingNumber: bidding.biddingNumber || "",
     secretariaId: bidding.secretariaId || "",
     setorId: bidding.setorId || "",
+    companyId: bidding.companyId || "",
     administrativeProcessNumber: bidding.administrativeProcessNumber || "",
     modality: bidding.modality || "",
     objectDescription: bidding.objectDescription || "",
@@ -84,6 +84,7 @@ function buildBiddingPayload(form) {
     biddingNumber: form.biddingNumber.trim(),
     secretariaId: form.secretariaId.trim(),
     setorId: form.setorId.trim(),
+    companyId: form.companyId.trim(),
     administrativeProcessNumber: form.administrativeProcessNumber.trim(),
     modality: form.modality.trim(),
     objectDescription: form.objectDescription.trim(),
@@ -110,8 +111,6 @@ export default function ProjectBiddingTab({ project, error, onError, onSaveBiddi
   const [secretarias, setSecretarias] = useState([]);
   const [setores, setSetores] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [companyQuery, setCompanyQuery] = useState("");
-  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [showSecretariaModal, setShowSecretariaModal] = useState(false);
   const [showSetorModal, setShowSetorModal] = useState(false);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -124,26 +123,25 @@ export default function ProjectBiddingTab({ project, error, onError, onSaveBiddi
     [setores, form.secretariaId],
   );
 
-  const selectedCompany = useMemo(() => {
-    const normalizedCnpj = String(form.winnerCnpj || "").replace(/\D/g, "");
-    return companies.find((company) => company.cnpj === normalizedCnpj) || null;
-  }, [companies, form.winnerCnpj]);
+  const selectedSecretaria = useMemo(
+    () => secretarias.find((secretaria) => secretaria.id === form.secretariaId) || null,
+    [secretarias, form.secretariaId],
+  );
 
-  const companyMatches = useMemo(() => {
-    const normalizedQuery = companyQuery.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return [];
+  const selectedSetor = useMemo(
+    () => filteredSetores.find((setor) => setor.id === form.setorId) || null,
+    [filteredSetores, form.setorId],
+  );
+
+  const selectedCompany = useMemo(() => {
+    const companyId = String(form.companyId || "").trim();
+    if (companyId) {
+      return companies.find((company) => company.id === companyId) || null;
     }
 
-    return companies
-      .filter((company) => {
-        const haystack = [company.corporateName, company.tradeName, formatCnpj(company.cnpj), company.cnpj]
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(normalizedQuery);
-      })
-      .slice(0, 8);
-  }, [companies, companyQuery]);
+    const normalizedCnpj = String(form.winnerCnpj || "").replace(/\D/g, "");
+    return companies.find((company) => company.cnpj === normalizedCnpj) || null;
+  }, [companies, form.companyId, form.winnerCnpj]);
 
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);
@@ -189,12 +187,10 @@ export default function ProjectBiddingTab({ project, error, onError, onSaveBiddi
   useEffect(() => {
     const nextForm = normalizeBiddingForForm(project?.bidding);
     setForm(nextForm);
-    setCompanyQuery(nextForm.winnerCnpj ? `${nextForm.winnerName} | ${formatCnpj(nextForm.winnerCnpj)}` : "");
     setFeedback("");
     setShowSecretariaModal(false);
     setShowSetorModal(false);
     setShowCompanyModal(false);
-    setCompanyDropdownOpen(false);
     setSecretariaForm({ name: "", sigla: "" });
     setSetorForm({ name: "", sigla: "", secretariaId: nextForm.secretariaId || "" });
     setCompanyForm(INITIAL_COMPANY_FORM);
@@ -208,43 +204,60 @@ export default function ProjectBiddingTab({ project, error, onError, onSaveBiddi
       return;
     }
 
-    if (name === "secretariaId") {
-      if (value === ADD_SECRETARIA_OPTION) {
-        setShowSecretariaModal(true);
-        return;
-      }
-
-      setForm((prev) => ({ ...prev, secretariaId: value, setorId: "" }));
-      setSetorForm((prev) => ({ ...prev, secretariaId: value }));
-      return;
-    }
-
-    if (name === "setorId") {
-      if (value === ADD_SUBUNIDADE_OPTION) {
-        if (!form.secretariaId) {
-          onError("Selecione uma secretaria antes de cadastrar a subunidade.");
-          return;
-        }
-        setSetorForm({ name: "", sigla: "", secretariaId: form.secretariaId });
-        setShowSetorModal(true);
-        return;
-      }
-
-      setForm((prev) => ({ ...prev, setorId: value }));
-      return;
-    }
-
     setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function selectSecretaria(secretaria) {
+    setForm((prev) => ({
+      ...prev,
+      secretariaId: secretaria.id,
+      setorId: "",
+    }));
+    setSetorForm((prev) => ({ ...prev, secretariaId: secretaria.id }));
+  }
+
+  function selectSetor(setor) {
+    setForm((prev) => ({ ...prev, setorId: setor.id }));
   }
 
   function selectCompany(company) {
     setForm((prev) => ({
       ...prev,
+      companyId: company.id,
       winnerName: company.corporateName,
       winnerCnpj: company.cnpj,
     }));
-    setCompanyQuery(`${company.corporateName} | ${formatCnpj(company.cnpj)}`);
-    setCompanyDropdownOpen(false);
+  }
+
+  function openSecretariaModalFromSearch(query) {
+    setSecretariaForm({
+      name: query,
+      sigla: "",
+    });
+    setShowSecretariaModal(true);
+  }
+
+  function openSetorModalFromSearch(query) {
+    if (!form.secretariaId) {
+      onError("Selecione uma secretaria antes de cadastrar a subunidade.");
+      return;
+    }
+
+    setSetorForm({
+      name: query,
+      sigla: "",
+      secretariaId: form.secretariaId,
+    });
+    setShowSetorModal(true);
+  }
+
+  function openCompanyModalFromSearch(query) {
+    setCompanyForm({
+      ...buildCompanyForm(null),
+      corporateName: query,
+      tradeName: query,
+    });
+    setShowCompanyModal(true);
   }
 
   async function saveSecretaria() {
@@ -388,27 +401,38 @@ export default function ProjectBiddingTab({ project, error, onError, onSaveBiddi
           <div className={styles.contractGrid}>
             <label>
               Secretaria responsável
-              <select name="secretariaId" value={form.secretariaId} onChange={onChange} required>
-                <option value="">Selecione...</option>
-                {secretarias.map((secretaria) => (
-                  <option key={secretaria.id} value={secretaria.id}>
-                    {secretaria.sigla} | {secretaria.name}
-                  </option>
-                ))}
-                <option value={ADD_SECRETARIA_OPTION}>+ Adicionar nova secretaria</option>
-              </select>
+              <SearchableCreateSelect
+                selectedItem={selectedSecretaria}
+                items={secretarias}
+                getItemKey={(secretaria) => secretaria.id}
+                getItemSearchText={(secretaria) => [secretaria.sigla, secretaria.name].join(" ")}
+                renderSelected={(secretaria) => `${secretaria.sigla} | ${secretaria.name}`}
+                renderOption={(secretaria) => <span>{secretaria.sigla} | {secretaria.name}</span>}
+                searchPlaceholder="Buscar por sigla ou nome"
+                emptyMessage="Nenhuma secretaria encontrada para essa busca."
+                addLabel="+ Adicionar nova secretaria"
+                onSelect={selectSecretaria}
+                onAdd={openSecretariaModalFromSearch}
+                initialQuery={selectedSecretaria ? `${selectedSecretaria.sigla} | ${selectedSecretaria.name}` : ""}
+              />
             </label>
             <label>
               Subunidade responsável
-              <select name="setorId" value={form.setorId} onChange={onChange} required disabled={!form.secretariaId}>
-                <option value="">Selecione...</option>
-                {filteredSetores.map((setor) => (
-                  <option key={setor.id} value={setor.id}>
-                    {setor.sigla} | {setor.name}
-                  </option>
-                ))}
-                {form.secretariaId ? <option value={ADD_SUBUNIDADE_OPTION}>+ Adicionar nova subunidade</option> : null}
-              </select>
+              <SearchableCreateSelect
+                selectedItem={selectedSetor}
+                items={filteredSetores}
+                getItemKey={(setor) => setor.id}
+                getItemSearchText={(setor) => [setor.sigla, setor.name].join(" ")}
+                renderSelected={(setor) => `${setor.sigla} | ${setor.name}`}
+                renderOption={(setor) => <span>{setor.sigla} | {setor.name}</span>}
+                searchPlaceholder={form.secretariaId ? "Buscar por sigla ou nome" : "Selecione uma secretaria antes"}
+                emptyMessage="Nenhuma subunidade encontrada para essa busca."
+                addLabel="+ Adicionar nova subunidade"
+                onSelect={selectSetor}
+                onAdd={openSetorModalFromSearch}
+                initialQuery={selectedSetor ? `${selectedSetor.sigla} | ${selectedSetor.name}` : ""}
+                disabled={!form.secretariaId}
+              />
             </label>
           </div>
 
@@ -444,67 +468,34 @@ export default function ProjectBiddingTab({ project, error, onError, onSaveBiddi
             </label>
           </div>
 
-          <div className={styles.companySearchBlock}>
+          <div className={styles.contractGrid}>
             <label>
               Empresa vencedora
-              <button
-                type="button"
-                className={styles.companySelectTrigger}
-                onClick={() => {
-                  setCompanyDropdownOpen((current) => {
-                    const next = !current;
-                    if (next) {
-                      setCompanyQuery("");
-                    }
-                    return next;
-                  });
-                }}
-              >
-                <span className={selectedCompany ? styles.companySelectValue : styles.companySelectPlaceholder}>
-                  {selectedCompany
-                    ? `${selectedCompany.corporateName} | ${formatCnpj(selectedCompany.cnpj)}`
-                    : "Selecione..."}
-                </span>
-                <span className={styles.companySelectChevron} aria-hidden="true">{companyDropdownOpen ? "^" : "v"}</span>
-              </button>
+              <SearchableCreateSelect
+                selectedItem={selectedCompany}
+                items={companies}
+                getItemKey={(company) => company.id}
+                getItemSearchText={(company) => [company.corporateName, company.tradeName, company.cnpj, formatCnpj(company.cnpj)].join(" ")}
+                renderSelected={(company) => `${company.corporateName} | ${formatCnpj(company.cnpj)}`}
+                renderOption={(company) => (
+                  <>
+                    <span>{company.corporateName}</span>
+                    <strong>{formatCnpj(company.cnpj)}</strong>
+                  </>
+                )}
+                searchPlaceholder="Buscar por CNPJ ou nome"
+                emptyMessage="Nenhuma empresa encontrada para essa busca."
+                addLabel="+ Adicionar nova empresa"
+                onSelect={selectCompany}
+                onAdd={openCompanyModalFromSearch}
+                initialQuery={selectedCompany ? `${selectedCompany.corporateName} | ${formatCnpj(selectedCompany.cnpj)}` : ""}
+              />
             </label>
 
-            {companyDropdownOpen ? (
-              <div className={styles.companySelectDropdown}>
-                <input
-                  className={styles.companySelectSearch}
-                  value={companyQuery}
-                  onChange={(event) => {
-                    setCompanyQuery(event.target.value);
-                    setForm((prev) => ({ ...prev, winnerName: "", winnerCnpj: "" }));
-                  }}
-                  placeholder="Buscar por CNPJ ou nome"
-                  autoFocus
-                />
-
-                <div className={styles.companySelectOptions}>
-                  {companyMatches.length > 0 ? (
-                    companyMatches.map((company) => (
-                      <button key={company.id} type="button" className={styles.companySelectOption} onClick={() => selectCompany(company)}>
-                        <span>{company.corporateName}</span>
-                        <strong>{formatCnpj(company.cnpj)}</strong>
-                      </button>
-                    ))
-                  ) : companyQuery.trim() ? (
-                    <button
-                      type="button"
-                      className={styles.companySelectOptionAdd}
-                      onClick={() => {
-                        setCompanyForm(buildCompanyForm(null));
-                        setShowCompanyModal(true);
-                      }}
-                    >
-                      + Adicionar nova empresa
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
+            <label>
+              CNPJ da empresa vencedora
+              <input value={selectedCompany ? formatCnpj(selectedCompany.cnpj) : ""} readOnly disabled className={styles.readonlyField} />
+            </label>
           </div>
 
           <div className={styles.actions}>

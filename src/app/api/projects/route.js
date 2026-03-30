@@ -6,7 +6,7 @@ import {
   updateProject,
 } from "@/lib/projects-store";
 import { listFundingSources } from "@/lib/funding-sources-store";
-import { getCompanyByCnpj } from "@/lib/companies-store";
+import { getCompanyById } from "@/lib/companies-store";
 import {
   getStakeholderById,
   listSecretarias,
@@ -126,6 +126,7 @@ function normalizeContractEntry(item) {
 
   return {
     contractNumber: String(item?.contractNumber || "").trim(),
+    companyId: String(item?.companyId || "").trim(),
     contractorName: String(item?.contractorName || "").trim(),
     contractorCnpj: String(item?.contractorCnpj || "").trim(),
     contractValueCents: Number.isFinite(rawContractValue) ? Math.round(rawContractValue) : null,
@@ -153,6 +154,7 @@ function normalizeBiddingEntry(item) {
     biddingNumber: String(item?.biddingNumber || "").trim(),
     secretariaId: String(item?.secretariaId || "").trim(),
     setorId: String(item?.setorId || "").trim(),
+    companyId: String(item?.companyId || "").trim(),
     administrativeProcessNumber: String(item?.administrativeProcessNumber || "").trim(),
     modality: String(item?.modality || "").trim(),
     objectDescription: String(item?.objectDescription || "").trim(),
@@ -407,6 +409,7 @@ async function validateProjectBody(body, currentProjectId = null) {
       !bidding.biddingNumber ||
       !bidding.secretariaId ||
       !bidding.setorId ||
+      !bidding.companyId ||
       !bidding.administrativeProcessNumber ||
       !bidding.modality ||
       bidding.bidValueCents === null ||
@@ -432,9 +435,13 @@ async function validateProjectBody(body, currentProjectId = null) {
       return "A subunidade da licitação precisa pertencer à secretaria selecionada.";
     }
 
-    const winningCompany = await getCompanyByCnpj(bidding.winnerCnpj);
+    const winningCompany = await getCompanyById(bidding.companyId);
     if (!winningCompany) {
       return "A empresa vencedora precisa existir em Partes Interessadas > Empresas.";
+    }
+
+    if (winningCompany.cnpj !== bidding.winnerCnpj) {
+      return "A empresa vencedora precisa ser selecionada a partir da base cadastrada.";
     }
 
     const acceptedNames = [winningCompany.corporateName, winningCompany.tradeName]
@@ -453,6 +460,7 @@ async function validateProjectBody(body, currentProjectId = null) {
 
     if (
       !contract.contractNumber ||
+      !contract.companyId ||
       !contract.contractorName ||
       !contract.contractorCnpj ||
       contract.contractValueCents === null ||
@@ -470,6 +478,15 @@ async function validateProjectBody(body, currentProjectId = null) {
 
     if (contract.contractorName !== bidding.winnerName || contract.contractorCnpj !== bidding.winnerCnpj) {
       return "A empresa e o CNPJ do contrato devem ser os mesmos da licitaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o vinculada.";
+    }
+
+    if (contract.companyId !== bidding.companyId) {
+      return "A empresa do contrato deve ser a mesma empresa vencedora da licitação vinculada.";
+    }
+
+    const contractCompany = await getCompanyById(contract.companyId);
+    if (!contractCompany || contractCompany.cnpj !== contract.contractorCnpj) {
+      return "A empresa do contrato deve estar vinculada corretamente ao cadastro de empresas.";
     }
 
     if (!secretariaIds.has(contract.secretariaId)) {

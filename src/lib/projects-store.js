@@ -160,6 +160,7 @@ function normalizeContract(input) {
   }
 
   const contractNumber = String(input.contractNumber || "").trim();
+  const companyId = String(input.companyId || "").trim();
   const contractorName = String(input.contractorName || "").trim();
   const contractorCnpj = String(input.contractorCnpj || "").trim();
   const contractValueCents = normalizeAmountCents(input.contractValueCents);
@@ -175,6 +176,7 @@ function normalizeContract(input) {
 
   const hasAnyValue = [
     contractNumber,
+    companyId,
     contractorName,
     contractorCnpj,
     contractValueCents,
@@ -195,6 +197,7 @@ function normalizeContract(input) {
 
   return {
     contractNumber,
+    companyId,
     contractorName,
     contractorCnpj,
     contractValueCents,
@@ -218,6 +221,7 @@ function normalizeBidding(input) {
   const biddingNumber = String(input.biddingNumber || "").trim();
   const secretariaId = String(input.secretariaId || "").trim();
   const setorId = String(input.setorId || "").trim();
+  const companyId = String(input.companyId || "").trim();
   const administrativeProcessNumber = String(input.administrativeProcessNumber || "").trim();
   const modality = String(input.modality || "").trim();
   const objectDescription = String(input.objectDescription || "").trim();
@@ -232,6 +236,7 @@ function normalizeBidding(input) {
     biddingNumber,
     secretariaId,
     setorId,
+    companyId,
     administrativeProcessNumber,
     modality,
     objectDescription,
@@ -251,6 +256,7 @@ function normalizeBidding(input) {
     biddingNumber,
     secretariaId,
     setorId,
+    companyId,
     administrativeProcessNumber,
     modality,
     objectDescription: objectDescription || null,
@@ -400,6 +406,7 @@ function mapContract(contract) {
 
   return {
     contractNumber: contract.contractNumber,
+    companyId: contract.companyId,
     contractorName: contract.contractorName,
     contractorCnpj: contract.contractorCnpj,
     contractValueCents: fromDbAmount(contract.contractValueCents),
@@ -424,6 +431,14 @@ function mapContract(contract) {
       contract.validityTermEndDate,
     ),
     addenda: (contract.addenda || []).map(mapAddendum),
+    company: contract.company
+      ? {
+          id: contract.company.id,
+          corporateName: contract.company.corporateName,
+          tradeName: contract.company.tradeName,
+          cnpj: contract.company.cnpj,
+        }
+      : null,
     createdAt: toIso(contract.createdAt),
     updatedAt: toIso(contract.updatedAt),
   };
@@ -438,6 +453,7 @@ function mapBidding(bidding) {
     biddingNumber: bidding.biddingNumber,
     secretariaId: bidding.secretariaId,
     setorId: bidding.setorId,
+    companyId: bidding.companyId,
     administrativeProcessNumber: bidding.administrativeProcessNumber,
     modality: bidding.modality,
     objectDescription: bidding.objectDescription,
@@ -445,6 +461,14 @@ function mapBidding(bidding) {
     homologatedValueCents: bidding.homologatedValueCents === null ? null : fromDbAmount(bidding.homologatedValueCents),
     winnerName: bidding.winnerName,
     winnerCnpj: bidding.winnerCnpj,
+    company: bidding.company
+      ? {
+          id: bidding.company.id,
+          corporateName: bidding.company.corporateName,
+          tradeName: bidding.company.tradeName,
+          cnpj: bidding.company.cnpj,
+        }
+      : null,
     publishedAt: toDateOnly(bidding.publishedAt),
     homologatedAt: toDateOnly(bidding.homologatedAt),
     createdAt: toIso(bidding.createdAt),
@@ -544,6 +568,7 @@ function buildBiddingCreate(projectId, bidding, createdAt = null, updatedAt = nu
     biddingNumber: bidding.biddingNumber,
     secretariaId: bidding.secretariaId || null,
     setorId: bidding.setorId || null,
+    companyId: bidding.companyId || null,
     administrativeProcessNumber: bidding.administrativeProcessNumber,
     modality: bidding.modality,
     objectDescription: bidding.objectDescription,
@@ -603,6 +628,7 @@ function buildContractCreate(projectId, contract, createdAt = null, updatedAt = 
     id: projectId,
     projectId,
     secretariaId: contract.secretariaId,
+    companyId: contract.companyId,
     contractNumber: contract.contractNumber,
     contractorName: contract.contractorName,
     contractorCnpj: contract.contractorCnpj,
@@ -665,12 +691,17 @@ async function fetchProjects() {
       },
       contract: {
         include: {
+          company: true,
           addenda: {
             orderBy: { number: "asc" },
           },
         },
       },
-      bidding: true,
+      bidding: {
+        include: {
+          company: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
