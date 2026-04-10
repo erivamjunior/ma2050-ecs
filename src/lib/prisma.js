@@ -1,13 +1,14 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { resolveDatabaseUrl } from "@/lib/database-url";
 
 const globalForPrisma = globalThis;
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = resolveDatabaseUrl(process.env);
 
   if (!connectionString) {
-    throw new Error("DATABASE_URL nao configurada.");
+    throw new Error("DATABASE_URL nao configurada e variaveis DB_* incompletas.");
   }
 
   const adapter = new PrismaPg({ connectionString });
