@@ -4,6 +4,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM base AS deps
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
+COPY src/lib/database-url.js ./src/lib/database-url.js
 RUN npm ci
 
 FROM deps AS build
