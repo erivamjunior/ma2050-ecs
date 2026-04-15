@@ -5,6 +5,10 @@ function normalizeSslMode(rawValue) {
     return "disable";
   }
 
+  if (["no-verify", "no_verify", "noverify"].includes(value)) {
+    return "no-verify";
+  }
+
   if (["verify-full", "verify_ca", "verify-ca"].includes(value)) {
     return "verify-full";
   }
